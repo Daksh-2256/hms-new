@@ -1,11 +1,18 @@
-const sgMail = require("@sendgrid/mail");
+const nodemailer = require("nodemailer");
 
-// Initialize SendGrid with API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Initialize Nodemailer with Brevo SMTP
+const mailTransporter = nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  auth: {
+    user: process.env.BREVO_SMTP_USER || process.env.EMAIL_USER,
+    pass: process.env.BREVO_SMTP_PASS || process.env.EMAIL_PASS,
+  }
+});
 
 /**
  * Transporter object for backward compatibility
- * Now uses SendGrid instead of Nodemailer SMTP
+ * Now uses Brevo SMTP
  */
 const transporter = {
   /**
@@ -19,17 +26,14 @@ const transporter = {
    * @param {Array} [mailOptions.attachments] - Email attachments (optional)
    */
   sendMailWithLog: async (mailOptions) => {
-    console.log("📧 Email send via SendGrid:");
+    console.log("📧 Email send via Brevo SMTP:");
     console.log("   To:", mailOptions.to);
     console.log("   Subject:", mailOptions.subject);
 
     try {
       const msg = {
         to: mailOptions.to,
-        from: {
-          email: mailOptions.from || process.env.SENDGRID_FROM_EMAIL,
-          name: "Samyak Ayurvedic Hospital"
-        },
+        from: mailOptions.from || process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER || "noreply@samyak.com",
         subject: mailOptions.subject,
         html: mailOptions.html,
       };
@@ -42,10 +46,9 @@ const transporter = {
       // Add optional attachments
       if (mailOptions.attachments && mailOptions.attachments.length > 0) {
         msg.attachments = mailOptions.attachments.map(att => ({
-          content: att.content.toString('base64'),
+          content: att.content, // Nodemailer supports Buffers/Strings directly
           filename: att.filename,
-          type: att.type || 'application/octet-stream',
-          disposition: 'attachment'
+          contentType: att.type || 'application/octet-stream' // optional contentType mappings
         }));
       }
 
@@ -54,22 +57,18 @@ const transporter = {
         msg.replyTo = mailOptions.replyTo;
       }
 
-      await sgMail.send(msg);
+      const info = await mailTransporter.sendMail(msg);
 
-      console.log("✅ Email sent successfully via SendGrid");
+      console.log("✅ Email sent successfully via Brevo SMTP");
       console.log("   To:", msg.to);
       console.log("   Subject:", msg.subject);
 
-      // Return mock info object for compatibility
-      return {
-        messageId: `<${Date.now()}@sendgrid>`,
-        response: 'Email sent via SendGrid'
-      };
+      return info;
     } catch (error) {
       console.error("❌ Email send FAILED:");
       console.error("   To:", mailOptions.to);
       console.error("   Subject:", mailOptions.subject);
-      console.error("   Error:", error.response?.body || error.message);
+      console.error("   Error:", error.message);
       throw error;
     }
   },
@@ -83,15 +82,10 @@ const transporter = {
   },
 
   /**
-   * Verify transporter (no-op for SendGrid)
-   * Kept for backward compatibility
+   * Verify transporter
    */
   verify: (callback) => {
-    console.log("⚠️ transporter.verify() called - not needed with SendGrid API");
-    if (callback) {
-      callback(null, true);
-    }
-    return Promise.resolve(true);
+    return mailTransporter.verify(callback);
   }
 };
 

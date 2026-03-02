@@ -1,10 +1,19 @@
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
-// Set SendGrid API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Configure Brevo (Sendinblue) SMTP Transporter
+// Ensure you have BREVO_SMTP_USER and BREVO_SMTP_PASS in your .env file
+// The BREVO_SMTP_PASS is your SMTP master password, not your API key.
+const transporter = nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  auth: {
+    user: process.env.BREVO_SMTP_USER || process.env.EMAIL_USER,
+    pass: process.env.BREVO_SMTP_PASS || process.env.EMAIL_PASS,
+  }
+});
 
 /**
- * Send email using SendGrid API
+ * Send email using Brevo SMTP
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email address
  * @param {string} options.subject - Email subject
@@ -14,32 +23,31 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  */
 const sendEmail = async ({ to, subject, html, text, attachments }) => {
   try {
-    const msg = {
+    const mailOptions = {
+      from: process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER || 'noreply@samyak.com',
       to,
-      from: process.env.SENDGRID_FROM_EMAIL,
       subject,
       html
     };
 
     // Add optional fields if provided
     if (text) {
-      msg.text = text;
+      mailOptions.text = text;
     }
 
     if (attachments && attachments.length > 0) {
-      msg.attachments = attachments.map(att => ({
-        content: att.content.toString('base64'),
+      mailOptions.attachments = attachments.map(att => ({
+        content: att.content, // Nodemailer natively supports Buffers
         filename: att.filename,
-        type: att.type || 'application/pdf',
-        disposition: 'attachment'
+        contentType: att.type || 'application/pdf'
       }));
     }
 
-    await sgMail.send(msg);
+    await transporter.sendMail(mailOptions);
 
-    console.log('✅ Email sent successfully to:', to);
+    console.log('✅ Email sent successfully using Brevo to:', to);
   } catch (error) {
-    console.error('❌ SendGrid email error:', error.response?.body || error.message);
+    console.error('❌ Brevo email error:', error.message);
     // Don't throw - email failures should not crash the server
   }
 };
@@ -59,7 +67,7 @@ async function sendPrescriptionEmail(options) {
   }
 
   console.log(`📧 [sendPrescriptionEmail] Starting prescription email send to: ${patient.email}`);
-  
+
   const htmlContent = `
     <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eaf4ee; border-radius: 12px; overflow: hidden;">
       <div style="background-color: #155c3b; color: #fff; padding: 30px; text-align: center;">
