@@ -3,7 +3,8 @@ const nodemailer = require("nodemailer");
 // Initialize Nodemailer with Brevo SMTP
 const mailTransporter = nodemailer.createTransport({
   host: 'smtp-relay.brevo.com',
-  port: 587,
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.BREVO_SMTP_USER || process.env.EMAIL_USER,
     pass: process.env.BREVO_SMTP_PASS || process.env.EMAIL_PASS,

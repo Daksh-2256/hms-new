@@ -5,7 +5,8 @@ const nodemailer = require('nodemailer');
 // The BREVO_SMTP_PASS is your SMTP master password, not your API key.
 const transporter = nodemailer.createTransport({
   host: 'smtp-relay.brevo.com',
-  port: 587,
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.BREVO_SMTP_USER || process.env.EMAIL_USER,
     pass: process.env.BREVO_SMTP_PASS || process.env.EMAIL_PASS,
