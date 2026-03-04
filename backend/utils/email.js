@@ -1,13 +1,13 @@
 const nodemailer = require("nodemailer");
 
-// Initialize Nodemailer with Brevo SMTP
+// Initialize Nodemailer with SendGrid SMTP
 const mailTransporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
+  host: 'smtp.sendgrid.net',
   port: 465,
   secure: true,
   auth: {
-    user: process.env.BREVO_SMTP_USER || process.env.EMAIL_USER,
-    pass: process.env.BREVO_SMTP_PASS || process.env.EMAIL_PASS,
+    user: 'apikey', // SendGrid user is always 'apikey'
+    pass: process.env.SENDGRID_API_KEY,
   }
 });
 
@@ -34,7 +34,7 @@ const transporter = {
     try {
       const msg = {
         to: mailOptions.to,
-        from: mailOptions.from || process.env.BREVO_FROM_EMAIL || process.env.EMAIL_USER || "noreply@samyak.com",
+        from: mailOptions.from || process.env.SENDGRID_FROM_EMAIL || "samyakhospital5678@gmail.com",
         subject: mailOptions.subject,
         html: mailOptions.html,
       };
@@ -60,7 +60,7 @@ const transporter = {
 
       const info = await mailTransporter.sendMail(msg);
 
-      console.log("✅ Email sent successfully via Brevo SMTP");
+      console.log("✅ Email sent successfully via SendGrid SMTP");
       console.log("   To:", msg.to);
       console.log("   Subject:", msg.subject);
 
