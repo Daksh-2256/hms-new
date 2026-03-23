@@ -1,4 +1,4 @@
-require("dotenv").config(); // must be first
+require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") }); // must be first
 const path = require("path");
 
 const express = require("express");
@@ -59,6 +59,7 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Frontend accessible at http://localhost:${PORT}`);
+  console.log(`Backend Server running on port ${PORT}`);
+  console.log(`Backend API URL: https://hms-new-production.up.railway.app`);
+  console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'https://hms-new-production.up.railway.app'}`);
 });
