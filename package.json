@@ -1,5 +1,12 @@
 {
-  "dependencies": {
-    "@getbrevo/brevo": "^4.0.1"
+  "name": "hms-new",
+  "version": "1.0.0",
+  "description": "Hospital Management System",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "cd backend && npm install",
+    "start": "cd backend && npm start"
   }
 }
